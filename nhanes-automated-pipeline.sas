@@ -6,7 +6,7 @@ Instructions: Add or remove module names or years in the lists below.
 YEAR CODES
 1999-2000: 1999  | 2001-2002: 2001  | 2003-2004: 2003 | 2005-2006: 2005  |  2007-2008: 2007 
 2009-2010: 2009  | 2011-2012: 2011  | 2013-2014: 2013 | 2015-2016: 2015  |  2017-2018: 2017 
-2021-2023: 2021
+2019-2020: Limited data due to covid  2021-2023: 2021
 Other years not available at the time this code was written 
   
 MODULE CODES (Other modules in NHANES not listed below may have different names by survey year)  
