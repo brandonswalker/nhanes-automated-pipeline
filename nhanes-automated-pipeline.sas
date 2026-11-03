@@ -1,4 +1,3 @@
-
 /* =========================================================================
 Configurable Multi-Year & Multi-Module NHANES Pipeline
 Instructions: Add or remove module names or years in the lists below.
@@ -6,7 +5,7 @@ Instructions: Add or remove module names or years in the lists below.
 YEAR CODES
 1999-2000: 1999  | 2001-2002: 2001  | 2003-2004: 2003 | 2005-2006: 2005  |  2007-2008: 2007 
 2009-2010: 2009  | 2011-2012: 2011  | 2013-2014: 2013 | 2015-2016: 2015  |  2017-2018: 2017 
-2019-2020: Limited data due to covid  2021-2023: 2021
+2021-2023: 2021
 Other years not available at the time this code was written 
   
 MODULE CODES (Other modules in NHANES not listed below may have different names by survey year)  
@@ -39,7 +38,7 @@ will cause an error if included in 2021
 /* 1. CONFIGURATION SECTION (Modify your datasets, years, and save path here) */
 %let modules   = DEMO BPX BMX ALQ BPQ HIQ SMQ;
 %let years     = 1999 2001 2003 2005 2007 2009 2011 2013 2015 2017;
-/*Change save path to appriopriate location */
+/*Change save path to appropriate location */
 %let save_path = /home/u1856730/NHANES; 
 
 
@@ -53,8 +52,8 @@ will cause an error if included in 2021
         %let yr = %scan(&years., &i, %str( ));
         
         /* Compute letter suffix: 
-           1999 -> No letter suffix (suff is empty, file is DEMO.xpt)
-           2001+ -> _B, _C, _D, etc. (suff is _B, _C, etc.) */
+            1999 -> No letter suffix (suff is empty, file is DEMO.xpt)
+            2001+ -> _B, _C, _D, etc. (suff is _B, _C, etc.) */
         %if &yr. = 1999 %then %do;
             %let letter = ;
             %let suff   = ;
@@ -94,18 +93,28 @@ will cause an error if included in 2021
         %end;
 
         /* C. Dynamically merge all modules for this specific year */
+        %local merge_list;
+        %let merge_list =;
+        %let j = 1;
+        %do %while (%scan(&modules., &j, %str( )) ne );
+            %let mod = %scan(&modules., &j, %str( ));
+            %if &j = 1 %then %let merge_list = work.&mod.&suff. (in=d);
+            %else %let merge_list = &merge_list. work.&mod.&suff.;
+            %let j = %eval(&j + 1);
+        %end;
+
         data work.nhanes_&yr.;
-            merge 
-            %let j = 1;
-            %do %while (%scan(&modules., &j, %str( )) ne );
-                %let mod = %scan(&modules., &j, %str( ));
-                %if &j = 1 %then work.&mod.&suff. (in=d);
-                %else work.&mod.&suff.;
-                %let j = %eval(&j + 1);
-            %end;
-            ;
+            merge &merge_list.;
             by seqn;
             if d; 
+            
+            /* Explicitly assign a standardized numeric SDDSRVYR for every cycle */
+            %if &yr. = 2021 %then %do;
+                SDDSRVYR = 12; /* 2021-2023 cycle */
+            %end;
+            %else %do;
+                SDDSRVYR = ((&yr. - 1999) / 2) + 1;
+            %end;
         run;
 
         /* D. Clean up individual raw module files for this cycle */
@@ -125,7 +134,7 @@ will cause an error if included in 2021
     %end;
 
 
-    /* E. Dynamically stack all 10 yearly merged files into one master dataset */
+    /* E. Dynamically stack all yearly merged files into one master dataset */
     data work.nhanes_all;
         set 
         %let i = 1;
@@ -145,9 +154,9 @@ will cause an error if included in 2021
 
 
 /* 4. SAVE PERMANENTLY TO YOUR NHANES DIRECTORY */
-libname myfolder "&save_path.";
+libname mynhanes "&save_path.";
 
-data myfolder.nhanes_all;
+data mynhanes.nhanes_all;
     set work.nhanes_all;
 run;
 
